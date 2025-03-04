@@ -37,12 +37,27 @@ async def info(ctx):
     embed.add_field(name="Ticket System", value="!ticket, !closeticket", inline=False)
     embed.set_footer(text="Made by You")
     await ctx.send(embed=embed)
-
+#ban and unban
 @bot.command()
 @commands.has_permissions(ban_members=True) 
 async def ban(ctx, member: discord.Member, *, reason="No reason provided"):
     await member.ban(reason=reason)
     await ctx.send(f"{member.mention} has been banned!")
+@bot.command()
+@commands.has_permissions(ban_members=True)  # Only users with ban permissions can use this
+async def unban(ctx, user_id: int):
+    guild = ctx.guild
+    try:
+        user = await bot.fetch_user(user_id)  
+        await guild.unban(user)
+        await ctx.send(f'✅ {user.name} has been unbanned.')
+    except discord.NotFound:
+        await ctx.send("❌ User not found in the ban list.")
+    except discord.Forbidden:
+        await ctx.send("❌ I don't have permission to unban this user.")
+    except Exception as e:
+        await ctx.send(f"❌ An error occurred: {e}")
+
 
 @bot.command()
 @commands.has_permissions(manage_roles=True)
@@ -52,9 +67,22 @@ async def mute(ctx, member: discord.Member):
         role = await ctx.guild.create_role(name="Muted")
         for channel in ctx.guild.channels:
             await channel.set_permissions(role, send_messages=False)
-    
+    for channel in ctx.guild.channels:
+        await channel.set_permissions(role, send_messages=False, speak=False)
+
     await member.add_roles(role)
     await ctx.send(f"{member.mention} has been muted!")
+@bot.command()
+@commands.has_permissions(manage_roles=True)
+async def unmute(ctx, member: discord.Member):
+    role = discord.utils.get(ctx.guild.roles, name="Muted")
+    
+    if role in member.roles:
+        await member.remove_roles(role)
+        await ctx.send(f"{member.mention} has been unmuted!")
+    else:
+        await ctx.send(f"{member.mention} is not muted.")
+
 #filter
 bad_words = []
 
