@@ -1,17 +1,20 @@
 import discord
 import os
 from discord.ext import commands
+import requests
 
 from discord.ext import commands
 from discord.ext import commands
 import yt_dlp as youtube_dl
 
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+WEATHER_API_KEY = os.getenv("WEATHER_API_TOKEN")
+
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# ✅ Moderation Commands
+#ModCommands
 @bot.command()
 @commands.has_permissions(kick_members=True)
 async def kick(ctx, member: discord.Member, *, reason="No reason provided"):
@@ -30,7 +33,7 @@ async def say(ctx, *, message):
 
 @bot.command()
 async def info(ctx):
-    embed = discord.test(title="Bot Info", description="This is a multipurpose bot!", color=0x00ff00)
+    embed = discord.Embed(title="Bot Info", description="This is a multipurpose bot!", color=0x00ff00)
     embed.add_field(name="Moderation Commands", value="!kick, !ban, !mute", inline=False)
     embed.add_field(name="Music Commands", value="!join, !queue, !play, !skip, !stop, !leave", inline=False)
     embed.add_field(name="General Commands", value="!hello, !say, !info", inline=False)
@@ -123,7 +126,7 @@ async def on_message(message):
     await bot.process_commands(message)  # Allow bot commands to still work
 
 
-# ✅ Music Player
+# Music Player
 @bot.command()
 async def join(ctx):
     if ctx.author.voice:
@@ -199,7 +202,43 @@ async def leave(ctx):
         await vc.disconnect()
         await ctx.send("👋 Left the voice channel.")
 
-# ✅ Ticket System
+#apis
+
+@bot.command()
+async def joke(ctx):
+    url = "https://v2.jokeapi.dev/joke/Any"
+    response = requests.get(url).json()
+    
+    if response["type"] == "single":
+        await ctx.send(response["joke"])  # Single line joke
+    else:
+        await ctx.send(f"{response['setup']}\n{response['delivery']}")  # Two-part joke
+@bot.command()
+async def weather(ctx, *, city: str):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
+    response = requests.get(url).json()
+
+    if response.get("cod") == 200:  # Ensure it's checking an integer, not a string
+        city_name = response["name"]
+        country = response["sys"]["country"]
+        temp = response["main"]["temp"]
+        weather_desc = response["weather"][0]["description"]
+        humidity = response["main"]["humidity"]
+        wind_speed = response["wind"]["speed"]
+
+        weather_report = (
+            f"**Weather in {city_name}, {country}:**\n"
+            f" Temperature: {temp}°C\n"
+            f" Condition: {weather_desc.capitalize()}\n"
+            f" Humidity: {humidity}%\n"
+            f" Wind Speed: {wind_speed} m/s"
+        )
+        await ctx.send(weather_report)
+    else:
+        await ctx.send(f"❌ Error: {response.get('message', 'Invalid city name or API error.')}")
+
+
+# Ticket System
 @bot.command()
 async def ticket(ctx):
     guild = ctx.guild
