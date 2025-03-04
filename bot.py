@@ -1,18 +1,49 @@
 import discord
 import os
-from discord.ext import commands
 import requests
+from dotenv import load_dotenv
+load_dotenv()
+from discord.ext import commands
+import asyncio
+import re
 
-from discord.ext import commands
-from discord.ext import commands
 import yt_dlp as youtube_dl
 
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-WEATHER_API_KEY = os.getenv("WEATHER_API_TOKEN")
+WEATHER_API_KEY =os.getenv("WEATHER_API_TOKEN")
 
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+#remind
+@bot.command()
+async def remindme(ctx, time: int, *,reminder=""):
+    await ctx.send(f"⏳ Reminder set for {time} seconds.")
+    await asyncio.sleep(time)
+    await ctx.send(f"🔔 {ctx.author.mention}, reminder: {reminder}")
+
+#embed
+@bot.command()
+async def embed(ctx, *, message: str):
+    match = re.search(r"title:\s*(.*?)\s*body:\s*(.*)", message, re.IGNORECASE)
+    
+    if not match:
+        await ctx.send("❌ Invalid format! Use `!embed title: Your Title body: Your Body`")
+        return
+    
+    title, body = match.groups()
+
+    embed = discord.Embed(
+        title=title.strip(),
+        description=body.strip().replace("\\n", "\n"),  # Convert \n into new lines
+        color=discord.Color.blue()
+    )
+
+
+    await ctx.send(embed=embed)
+
+
 
 #ModCommands
 @bot.command()
@@ -61,7 +92,7 @@ async def unban(ctx, user_id: int):
     except Exception as e:
         await ctx.send(f"❌ An error occurred: {e}")
 
-
+#mute unmute
 @bot.command()
 @commands.has_permissions(manage_roles=True)
 async def mute(ctx, member: discord.Member):
@@ -111,9 +142,9 @@ async def showfilter(ctx):
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
-        return  # Ignore bot's own messages
+        return  
 
-    # Check if message contains any filtered words
+    
     if any(word in message.content.lower() for word in bad_words):
         try:
             await message.delete()
@@ -123,7 +154,7 @@ async def on_message(message):
         except discord.HTTPException:
             await message.channel.send("❌ Failed to delete the message due to an error.")
 
-    await bot.process_commands(message)  # Allow bot commands to still work
+    await bot.process_commands(message) 
 
 
 # Music Player
@@ -251,9 +282,9 @@ async def ticket(ctx):
     await ticket_channel.send(f"{ctx.author.mention}, how can we help you?")
 
 @bot.command()
-@commands.has_permissions(manage_channels=True)  # Only mods/admins can use this
+@commands.has_permissions(manage_channels=True)  
 async def closeticket(ctx):
-    if "ticket" in ctx.channel.name:  # Only works in ticket channels
+    if "ticket" in ctx.channel.name:  
         try:
             await ctx.channel.delete()
         except TimeoutError:
