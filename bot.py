@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 #welcome message
 @bot.event
 async def on_member_join(member):
-    channel = discord.utils.get(member.guild.text_channels, name="general")  # Change to your actual welcome channel name
+    channel = discord.utils.get(member.guild.text_channels, name="general")  
     if channel:
         await channel.send(f"Hello {member.mention}!\n"
                            "Welcome to GDSC Recruitments 2025! \n"
@@ -27,9 +27,9 @@ async def on_member_join(member):
 #remind
 @bot.command()
 async def remindme(ctx, time: int, *,reminder=""):
-    await ctx.send(f"⏳ Reminder set for {time} seconds.")
+    await ctx.send(f" Reminder set for {time} seconds.")
     await asyncio.sleep(time)
-    await ctx.send(f"🔔 {ctx.author.mention}, reminder: {reminder}")
+    await ctx.send(f" {ctx.author.mention}, reminder: {reminder}")
 
 #embed
 @bot.command()
@@ -37,14 +37,14 @@ async def embed(ctx, *, message: str):
     match = re.search(r"title:\s*(.*?)\s*body:\s*(.*)", message, re.IGNORECASE)
     
     if not match:
-        await ctx.send("❌ Invalid format! Use `!embed title: Your Title body: Your Body`")
+        await ctx.send(" Invalid format! Use `!embed title: Your Title body: Your Body`")
         return
     
     title, body = match.groups()
 
     embed = discord.Embed(
         title=title.strip(),
-        description=body.strip().replace("\\n", "\n"),  # Convert \n into new lines
+        description=body.strip().replace("\\n", "\n"),  
         color=discord.Color.blue()
     )
 
@@ -86,19 +86,19 @@ async def ban(ctx, member: discord.Member, *, reason="No reason provided"):
     await member.ban(reason=reason)
     await ctx.send(f"{member.mention} has been banned!")
 @bot.command()
-@commands.has_permissions(ban_members=True)  # Only users with ban permissions can use this
+@commands.has_permissions(ban_members=True) 
 async def unban(ctx, user_id: int):
     guild = ctx.guild
     try:
         user = await bot.fetch_user(user_id)  
         await guild.unban(user)
-        await ctx.send(f'✅ {user.name} has been unbanned.')
+        await ctx.send(f' {user.name} has been unbanned.')
     except discord.NotFound:
-        await ctx.send("❌ User not found in the ban list.")
+        await ctx.send(" User not found in the ban list.")
     except discord.Forbidden:
-        await ctx.send("❌ I don't have permission to unban this user.")
+        await ctx.send(" I don't have permission to unban this user.")
     except Exception as e:
-        await ctx.send(f"❌ An error occurred: {e}")
+        await ctx.send(f" An error occurred: {e}")
 
 #mute unmute
 @bot.command()
@@ -132,11 +132,11 @@ bad_words = []
 @commands.has_permissions(manage_messages=True)
 async def filter(ctx, word: str):
     if word.lower() in bad_words:
-        await ctx.send(f"❌ `{word}` is already in the filter list.")
+        await ctx.send(f" `{word}` is already in the filter list.")
         return
     
     bad_words.append(word.lower())
-    await ctx.send(f"✅ `{word}` has been added to the filter list!")
+    await ctx.send(f" `{word}` has been added to the filter list!")
 
 @bot.command()
 @commands.has_permissions(manage_messages=True)
@@ -144,7 +144,7 @@ async def showfilter(ctx):
     if not bad_words:
         await ctx.send("🔹 No words are currently filtered.")
     else:
-        await ctx.send(f"🚫 **Filtered words:** {', '.join(bad_words)}")
+        await ctx.send(f" **Filtered words:** {', '.join(bad_words)}")
 
 
 @bot.event
@@ -158,9 +158,9 @@ async def on_message(message):
             await message.delete()
             await message.channel.send(f"{message.author.mention}, watch your language! 🚫", delete_after=5)
         except discord.Forbidden:
-            await message.channel.send("❌ I don't have permission to delete messages.")
+            await message.channel.send(" I don't have permission to delete messages.")
         except discord.HTTPException:
-            await message.channel.send("❌ Failed to delete the message due to an error.")
+            await message.channel.send(" Failed to delete the message due to an error.")
 
     await bot.process_commands(message) 
 
@@ -170,22 +170,22 @@ async def on_message(message):
 async def join(ctx):
     if ctx.author.voice:
         await ctx.author.voice.channel.connect()
-        await ctx.send("🎵 Joined voice channel!")
+        await ctx.send(" Joined voice channel!")
     else:
-        await ctx.send("❌ You must be in a voice channel!")
+        await ctx.send(" You must be in a voice channel!")
 
-song_queue = []  # Global queue list
+song_queue = []  
 
 @bot.command()
 async def queue(ctx, url):
     song_queue.append(url)
-    await ctx.send(f"📌 Added to queue: {url}")
+    await ctx.send(f" Added to queue: {url}")
 
 @bot.command()
 async def play(ctx, url=None):
     vc = ctx.voice_client
     if not ctx.author.voice:
-        await ctx.send("❌ You must be in a voice channel!")
+        await ctx.send(" You must be in a voice channel!")
         return
 
     if not vc:
@@ -201,7 +201,7 @@ async def playnext(ctx):
     vc = ctx.voice_client
 
     if not vc:
-        await ctx.send("❌ Bot is not in a voice channel!")
+        await ctx.send(" Bot is not in a voice channel!")
         return
 
     if song_queue:
@@ -211,35 +211,35 @@ async def playnext(ctx):
             info = ydl.extract_info(url, download=False)
             url2 = info['url']
             vc.play(discord.FFmpegPCMAudio(url2), after=lambda _: bot.loop.create_task(playnext(ctx)))
-            await ctx.send(f"🎶 Now playing: {info['title']}")
+            await ctx.send(f" Now playing: {info['title']}")
     else:
-        await ctx.send("✅ Queue is empty.")
+        await ctx.send(" Queue is empty.")
 
 @bot.command()
 async def skip(ctx):
     vc = ctx.voice_client
     if vc and vc.is_playing():
         vc.stop()
-        await ctx.send("⏭️ Skipping to the next song...")
+        await ctx.send(" Skipping to the next song...")
         await playnext(ctx)
     else:
-        await ctx.send("❌ No music is playing to skip!")
+        await ctx.send(" No music is playing to skip!")
 
 @bot.command()
 async def stop(ctx):
     vc = ctx.voice_client
     if vc and vc.is_playing():
         vc.stop()
-        await ctx.send("⏹️ Music stopped!")
+        await ctx.send(" Music stopped!")
     else:
-        await ctx.send("❌ No music is currently playing.")
+        await ctx.send(" No music is currently playing.")
 
 @bot.command()
 async def leave(ctx):
     vc = ctx.voice_client
     if vc:
         await vc.disconnect()
-        await ctx.send("👋 Left the voice channel.")
+        await ctx.send(" Left the voice channel.")
 
 #apis
 
@@ -274,7 +274,7 @@ async def weather(ctx, *, city: str):
         )
         await ctx.send(weather_report)
     else:
-        await ctx.send(f"❌ Error: {response.get('message', 'Invalid city name or API error.')}")
+        await ctx.send(f" Error: {response.get('message', 'Invalid city name or API error.')}")
 
 
 #better ticket
