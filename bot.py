@@ -6,7 +6,7 @@ load_dotenv()
 from discord.ext import commands
 import asyncio
 import re
-
+from discord.ui import Button, View
 import yt_dlp as youtube_dl
 
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
@@ -15,6 +15,14 @@ WEATHER_API_KEY =os.getenv("WEATHER_API_TOKEN")
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
+#welcome message
+@bot.event
+async def on_member_join(member):
+    channel = discord.utils.get(member.guild.text_channels, name="general")  # Change to your actual welcome channel name
+    if channel:
+        await channel.send(f"Hello {member.mention}!\n"
+                           "Welcome to GDSC Recruitments 2025! \n"
+                           "We are glad you made it this far! ")
 
 #remind
 @bot.command()
@@ -269,7 +277,46 @@ async def weather(ctx, *, city: str):
         await ctx.send(f"❌ Error: {response.get('message', 'Invalid city name or API error.')}")
 
 
-# Ticket System
+#better ticket
+class TicketView(View):
+    def __init__(self):
+        super().__init__(timeout=None)  
+
+    @discord.ui.button(label="Create Ticket", style=discord.ButtonStyle.green, custom_id="create_ticket")
+    async def create_ticket(self, interaction: discord.Interaction, button: Button):
+        guild = interaction.guild
+        category = discord.utils.get(guild.categories, name="Tickets")  
+        if not category:
+            category = await guild.create_category("Tickets")  
+        ticket_number = sum(1 for c in category.channels if c.name.startswith("ticket-")) + 1
+        ticket_name = f"ticket-{ticket_number:04d}"  
+
+        ticket_channel = await guild.create_text_channel(ticket_name, category=category)
+        await ticket_channel.set_permissions(interaction.user, read_messages=True, send_messages=True)
+        
+        await ticket_channel.send(f"{interaction.user.mention}, your ticket has been created!")
+        await interaction.response.send_message(f" Ticket **{ticket_name}** created!", ephemeral=True)
+
+@bot.command()
+async def ticket(ctx):
+    embed = discord.Embed(
+        title=" Support Ticket System",
+        description="Click the **Create Ticket** button below to create a support ticket.",
+        color=discord.Color.blue()
+    )
+    view = TicketView()
+    await ctx.send(embed=embed, view=view)
+
+@bot.command()
+@commands.has_permissions(manage_channels=True)
+async def closeticket(ctx):
+    if ctx.channel.category and ctx.channel.category.name == "Tickets": 
+        
+        await ctx.channel.delete()
+    else:
+        await ctx.send(" You can only use this command inside a **ticket channel**.")
+
+'''# Ticket System
 @bot.command()
 async def ticket(ctx):
     guild = ctx.guild
@@ -290,6 +337,6 @@ async def closeticket(ctx):
         except TimeoutError:
             await ctx.send("Channel deletion cancelled. You didn't confirm in time.")
     else:
-        await ctx.send("❌ You can only delete **ticket channels**.")
+        await ctx.send(" You can only delete **ticket channels**.")'''
 
 bot.run(TOKEN)
