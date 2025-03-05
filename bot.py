@@ -29,6 +29,27 @@ async def on_member_join(member):
         await channel.send(f"Hello {member.mention}!\n"
                            "Welcome to GDSC Recruitments 2025! \n"
                            "We are glad you made it this far! ")
+#polls
+@bot.command()
+async def poll(ctx, *,message):
+    question, options = message.split("options:", 1)
+    question = question.strip()
+    options = options.strip().split()
+
+    if len(options) < 2:
+        await ctx.send(" You must provide at least two options for the poll.")
+        return
+    if len(options) > 10:
+        await ctx.send(" You can only provide up to 10 options.")
+        return
+    emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+    embed = discord.Embed(title=" Poll", description=question, color=discord.Color.blue())
+    description = "\n".join([f"{emojis[i]} {options[i]}" for i in range(len(options))])
+    embed.add_field(name="Options", value=description, inline=False)
+    poll_message = await ctx.send(embed=embed)
+    for i in range(len(options)):
+        await poll_message.add_reaction(emojis[i])
+
 
 #remind
 reminders = {}
