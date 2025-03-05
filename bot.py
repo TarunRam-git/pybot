@@ -143,13 +143,24 @@ async def say(ctx, *, message):
 
 @bot.command()
 async def info(ctx):
-    embed = discord.Embed(title="Bot Info", description="This is a multipurpose bot!", color=0x00ff00)
-    embed.add_field(name="Moderation Commands", value="!kick, !ban, !mute", inline=False)
-    embed.add_field(name="Music Commands", value="!join, !queue, !play, !skip, !stop, !leave", inline=False)
-    embed.add_field(name="General Commands", value="!hello, !say, !info", inline=False)
-    embed.add_field(name="Ticket System", value="!ticket, !closeticket", inline=False)
-    embed.set_footer(text="Made by You")
+    embed = discord.Embed(
+        title="Bot Info",
+        description="**A bot better than Kanye west**",
+        color=0x00ff00
+    )
+    
+    embed.add_field(name="mod", value="!kick, !ban, !mute,!unmute, !unban", inline=False)
+    embed.add_field(name=" Music Commands", value="!join, !queue, !play, !playnext, !skip, !stop, !leave", inline=False)
+    embed.add_field(name=" General Commands", value="!hello, !say, !info", inline=False)
+    embed.add_field(name=" Gemini", value="!summarize", inline=False)
+
+    embed.add_field(name=" Poll Commands", value="!poll", inline=False)
+    embed.add_field(name=" Ticket System", value="!ticket, !closeticket", inline=False)
+    
+    embed.set_footer(text="Made by Monkey D Luffy")
+    
     await ctx.send(embed=embed)
+
 #ban and unban
 @bot.command()
 @commands.has_permissions(ban_members=True) 
