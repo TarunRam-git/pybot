@@ -7,6 +7,8 @@ from discord.ext import commands
 import google.generativeai as genai
 import asyncio
 import re
+import parsedatetime
+from datetime import datetime
 from discord.ui import Button, View
 import yt_dlp as youtube_dl
 
@@ -29,11 +31,55 @@ async def on_member_join(member):
                            "We are glad you made it this far! ")
 
 #remind
+reminders = {}
+
 @bot.command()
-async def remindme(ctx, time: int, *,reminder=""):
-    await ctx.send(f" Reminder set for {time} seconds.")
-    await asyncio.sleep(time)
-    await ctx.send(f" {ctx.author.mention}, reminder: {reminder}")
+async def remindme(ctx, *, time_input):
+    cal = parsedatetime.Calendar()
+    time_struct, _ = cal.parse(time_input)
+    reminder_time = datetime(*time_struct[:6])
+    if reminder_time < datetime.now():
+        await ctx.send(" That time is in the past! Provide a future time.")
+        return
+    reminder_text = " ".join(time_input.split()[2:]) or "No message provided"
+    user_id = ctx.author.id
+    if user_id not in reminders:
+        reminders[user_id] = []
+    reminders[user_id].append((reminder_time, reminder_text))
+    await ctx.send(f" Reminder set for **{reminder_time.strftime('%d %B %Y %I:%M %p')}**.")
+    await asyncio.sleep((reminder_time - datetime.now()).total_seconds())
+    await ctx.send(f" {ctx.author.mention}, reminder: **{reminder_text}**")
+    reminders[user_id] = [r for r in reminders[user_id] if r[0] > datetime.now()]
+
+@bot.command()
+async def listreminders(ctx):
+    user_id = ctx.author.id
+    if user_id not in reminders or not reminders[user_id]:
+        await ctx.send(" You have no active reminders.")
+        return
+    reminder_list = "\n".join([f"{i+1}. **{r[0].strftime('%d %B %Y %I:%M %p')}** - {r[1]}" for i, r in enumerate(reminders[user_id])])
+    await ctx.send(f" **Your Reminders:**\n{reminder_list}")
+
+@bot.command()
+async def deletereminder(ctx, reminder_number: int):
+    user_id = ctx.author.id
+    if user_id not in reminders or not reminders[user_id]:
+        await ctx.send(" You have no active reminders to delete.")
+        return
+    if 1 <= reminder_number <= len(reminders[user_id]):
+        removed = reminders[user_id].pop(reminder_number - 1)
+        await ctx.send(f"🗑 Reminder for **{removed[0].strftime('%d %B %Y %I:%M %p')}** deleted.")
+    else:
+        await ctx.send("Invalid reminder number.")
+
+@bot.command()
+async def clearreminders(ctx):
+    user_id = ctx.author.id
+    if user_id in reminders:
+        reminders.pop(user_id, None)
+        await ctx.send(" All your reminders have been cleared.")
+    else:
+        await ctx.send(" You have no active reminders to clear.")
 
 #embed
 @bot.command()
