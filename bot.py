@@ -4,6 +4,7 @@ import requests
 from dotenv import load_dotenv
 load_dotenv()
 from discord.ext import commands
+import google.generativeai as genai
 import asyncio
 import re
 from discord.ui import Button, View
@@ -11,6 +12,9 @@ import yt_dlp as youtube_dl
 
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 WEATHER_API_KEY =os.getenv("WEATHER_API_TOKEN")
+genai.configure(api_key=os.getenv("GEMINI_API_TOKEN"))
+model = genai.GenerativeModel("gemini-1.5-flash")  
+
 
 
 intents = discord.Intents.all()
@@ -242,6 +246,28 @@ async def leave(ctx):
         await ctx.send(" Left the voice channel.")
 
 #apis
+
+@bot.command()
+async def summarize(ctx, *, text):
+    
+    if text is None:
+        await ctx.send("Please provide a paragraph to summarize.")
+        return
+
+    await ctx.send("Summarizing...")
+
+    try:
+        response = await asyncio.to_thread(model.generate_content, f"summarize {text}" )
+        summary = str(response.text.strip())
+
+        embed = discord.Embed(title="Summary", description=summary, color=discord.Color.green())
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"Error: {str(e)}")
+
+
+
+
 
 @bot.command()
 async def joke(ctx):
